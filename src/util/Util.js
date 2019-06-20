@@ -51,11 +51,12 @@ class Util {
 
   /**
    * Splits a string into multiple chunks at a designated character that do not exceed a specific length.
-   * @param {string} text Content to split
+   * @param {StringResolvable} text Content to split
    * @param {SplitOptions} [options] Options controlling the behavior of the split
    * @returns {string|string[]}
    */
   static splitMessage(text, { maxLength = 2000, char = '\n', prepend = '', append = '' } = {}) {
+    text = this.resolveString(text);
     if (text.length <= maxLength) return text;
     const splitText = text.split(char);
     if (splitText.some(chunk => chunk.length > maxLength)) throw new RangeError('SPLIT_MAX_LEN');
@@ -236,7 +237,7 @@ class Util {
    */
   static resolveString(data) {
     if (typeof data === 'string') return data;
-    if (data instanceof Array) return data.join('\n');
+    if (Array.isArray(data)) return data.join('\n');
     return String(data);
   }
 
@@ -251,6 +252,7 @@ class Util {
    * - `AQUA`
    * - `GREEN`
    * - `BLUE`
+   * - `YELLOW`
    * - `PURPLE`
    * - `LUMINOUS_VIVID_PINK`
    * - `GOLD`
@@ -284,7 +286,7 @@ class Util {
       if (color === 'RANDOM') return Math.floor(Math.random() * (0xFFFFFF + 1));
       if (color === 'DEFAULT') return 0;
       color = Colors[color] || parseInt(color.replace('#', ''), 16);
-    } else if (color instanceof Array) {
+    } else if (Array.isArray(color)) {
       color = (color[0] << 16) + (color[1] << 8) + color[2];
     }
 
@@ -395,7 +397,7 @@ class Util {
       .replace(/@(everyone|here)/g, '@\u200b$1')
       .replace(/<@!?[0-9]+>/g, input => {
         const id = input.replace(/<|!|>|@/g, '');
-        if (message.channel.type === 'dm' || message.channel.type === 'group') {
+        if (message.channel.type === 'dm') {
           const user = message.client.users.get(id);
           return user ? `@${user.username}` : input;
         }
@@ -413,7 +415,7 @@ class Util {
         return channel ? `#${channel.name}` : input;
       })
       .replace(/<@&[0-9]+>/g, input => {
-        if (message.channel.type === 'dm' || message.channel.type === 'group') return input;
+        if (message.channel.type === 'dm') return input;
         const role = message.guild.roles.get(input.replace(/<|@|>|&/g, ''));
         return role ? `@${role.name}` : input;
       });
